@@ -1,10 +1,11 @@
 # MalDev
 
-This is a collection of techniques related to malware development techniques targeting Windows.
+This is a collection of malware development tecniques in Golang.
+The main (and only) is Windows.
 
 ## Payload Injecion
 
-This is a simple injection, using VirtualAlloxEx and CreateRemoteThread to execute a payload from a target process.
+This is a simple injection, using `VirtualAlloxEx` and `CreateRemoteThread` to execute a payload from a target process.
 
 Build:
 
