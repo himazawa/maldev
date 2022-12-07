@@ -1,6 +1,6 @@
 # MalDev
 
-This is a collection of malware development tecniques in Golang.
+This is a collection of malware development techniques in Golang.
 The main (and only) target is Windows.
 
 ## Payload Injecion
