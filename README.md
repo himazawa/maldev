@@ -3,7 +3,7 @@
 This is a collection of malware development techniques in Golang.
 The main (and only) target is Windows.
 
-## Payload Injecion
+## Payload Injection
 
 This is a simple injection, using `VirtualAlloxEx` and `CreateRemoteThread` to execute a payload from a target process.
 
